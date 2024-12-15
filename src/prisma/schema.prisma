@@ -7,8 +7,6 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-
-
 model User {
   id        Int      @id @default(autoincrement())
   fullName  String
@@ -29,20 +27,16 @@ model User {
 model Couple {
   id          Int      @id @default(autoincrement())
   user1Id     Int
-  user2Id     Int
+  user2Id     Int?
   createdAt   DateTime @default(now())
   
   // Relacionamentos
   user1       User     @relation("User1Couples", fields: [user1Id], references: [id])
-  user2       User     @relation("User2Couples", fields: [user2Id], references: [id])
+  user2       User?     @relation("User2Couples", fields: [user2Id], references: [id])
   gifts       Gift[]   // Presentes associados ao casal
   
   @@unique([user1Id, user2Id]) // Garante que um casal seja único
 }
-
-
-
-
 
 model Gift {
   id             Int      @id @default(autoincrement())
