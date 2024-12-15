@@ -1,5 +1,5 @@
 import fastifyPlugin from 'fastify-plugin';
-import fastifyJwt from 'fastify-jwt';
+import fastifyJwt from '@fastify/jwt';
 import dotenv from 'dotenv';
 
 // Carrega as variáveis de ambiente do arquivo .env

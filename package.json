@@ -19,10 +19,10 @@
     "typescript": "^5.7.2"
   },
   "dependencies": {
+    "@fastify/jwt": "^5.0.1",
     "@prisma/client": "^6.0.1",
     "bcryptjs": "^2.4.3",
     "fastify": "^5.2.0",
-    "fastify-jwt": "^4.2.0",
     "ioredis": "^5.4.1",
     "zod": "^3.23.8"
   },
