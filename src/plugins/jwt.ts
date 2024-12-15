@@ -10,6 +10,7 @@ export async function jwtPlugin(fastify: any) {
     secret: process.env.JWT_SECRET,
     sign: {
       expiresIn: process.env.JWT_EXPIRATION,
+    },
   });
 }
 
