@@ -1,21 +1,28 @@
 import fastify from "fastify";
 import { createGift } from "./routes/gift/create-gift";
-import fastifyMultipart from '@fastify/multipart';
+import { register } from "./routes/auth/register";
+import { login } from "./routes/auth/login";
+import { jwtPlugin } from "../plugins/jwt";
 
 const app = fastify();
-
-app.register(fastifyMultipart, {
-  limits: {
-    fileSize: 5 * 1024 * 1024, // Limite de 5MB para arquivos
-  },
-});
+app.register(jwtPlugin);
 
 app.get('/', () => {
     return 'Servidor OK...'
 })
 
 app.register(createGift);
+app.register(register);
+app.register(login);
 
 app.listen({ port: 8080}).then(() => {
     console.log('Server is running...')
 })
+
+app.decorate('authenticate', async (request: any) => {
+    try {
+      await request.jwtVerify();
+    } catch (err) {
+      throw new Error('Unauthorized');
+    }
+  });
