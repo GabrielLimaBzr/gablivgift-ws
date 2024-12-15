@@ -11,7 +11,8 @@ datasource db {
 
 model User {
   id        Int      @id @default(autoincrement())
-  name      String
+  fullName  String
+  nickname  String?
   email     String   @unique
   password  String
   createdAt DateTime @default(now())
@@ -45,17 +46,17 @@ model Couple {
 
 model Gift {
   id             Int      @id @default(autoincrement())
-  coupleId       Int      // Associado ao casal
+  coupleId       Int?      // Associado ao casal
   title          String
   description    String?   @db.Text
   imageUrl       String?   @db.Text
-  estimatedPrice Float
+  estimatedPrice Float?
   category       Int      @default(9)
   priority       Boolean  @default(false)
   createdAt      DateTime @default(now())
   
   // Relacionamento
-  couple         Couple   @relation(fields: [coupleId], references: [id])
+  couple         Couple?   @relation(fields: [coupleId], references: [id])
 
   addedByUserId  Int
   addedByUser    User      @relation(fields: [addedByUserId], references: [id])

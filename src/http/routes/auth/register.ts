@@ -6,7 +6,7 @@ const prisma = new PrismaClient();
 
 export async function register(fastify: FastifyInstance) {
   fastify.post('/register', async (request, reply) => {
-    const { name, email, password } = request.body as { name: string; email: string; password: string };
+    const { fullName, email, password } = request.body as { fullName: string; email: string; password: string };
 
     // Verifica se o usuário já existe
     const existingUser = await prisma.user.findUnique({
@@ -23,9 +23,14 @@ export async function register(fastify: FastifyInstance) {
     // Cria o novo usuário no banco de dados
     const user = await prisma.user.create({
       data: {
-        name,
+        fullName,
         email,
         password: hashedPassword,
+      },
+      select: {
+        id: true,
+        fullName: true,
+        nickname: true,
       },
     });
 

@@ -1,16 +1,8 @@
-/*
-  Warnings:
-
-  - You are about to drop the `Gifts` table. If the table is not empty, all the data it contains will be lost.
-
-*/
--- DropTable
-DROP TABLE "Gifts";
-
 -- CreateTable
 CREATE TABLE "User" (
     "id" SERIAL NOT NULL,
-    "name" TEXT NOT NULL,
+    "fullName" TEXT NOT NULL,
+    "nickname" TEXT,
     "email" TEXT NOT NULL,
     "password" TEXT NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -36,7 +28,7 @@ CREATE TABLE "Gift" (
     "title" TEXT NOT NULL,
     "description" TEXT,
     "imageUrl" TEXT,
-    "estimatedPrice" DOUBLE PRECISION NOT NULL,
+    "estimatedPrice" DOUBLE PRECISION,
     "category" INTEGER NOT NULL DEFAULT 9,
     "priority" BOOLEAN NOT NULL DEFAULT false,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,

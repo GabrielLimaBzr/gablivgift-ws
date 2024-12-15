@@ -21,5 +21,16 @@ services:
       timeout: 5s
       retries: 5
 
+  redis:
+    image: redis:7
+    container_name: my_redis
+    restart: always
+    command: redis-server --appendonly yes
+    volumes:
+      - redisdata:/data
+    ports:
+      - "6379:6379"
+
 volumes:
   postgres_data:
+  redisdata:
