@@ -29,7 +29,7 @@ app.addHook("onRequest", async (request, reply) => {
 });
 
 // Rota principal para verificar se o servidor está online
-app.get('/', async () => {
+app.get('/checkl7', async () => {
   return { status: 'Servidor OK...' };
 });
 

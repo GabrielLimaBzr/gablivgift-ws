@@ -16,7 +16,7 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD", "pg_isready", "-U", "postgres"]
+      test: ["CMD", "pg_isready", "-U", "${POSTGRES_USER}"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -38,11 +38,7 @@ services:
     container_name: app_service
     restart: always
     ports:
-      - "3000:3000" # Porta onde o Fastify vai rodar
-    environment:
-      DATABASE_URL: "postgresql://postgres:postgres@postgres:5432/apps"
-      REDIS_URL: "redis://my_redis:6379"
-      NODE_ENV: development
+      - "3000:3000"
     depends_on:
       - postgres
       - redis
