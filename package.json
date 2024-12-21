@@ -4,7 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "dev": "tsx watch src/http/server.ts"
+    "dev": "tsx watch src/http/server.ts",
+    "prod": "npx prisma generate && tsx watch src/http/server.ts"
   },
   "keywords": [],
   "author": "",
