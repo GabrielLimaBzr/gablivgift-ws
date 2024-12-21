@@ -3,10 +3,13 @@
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
-  "scripts": {
-    "dev": "tsx watch src/http/server.ts",
-    "prod": "npx prisma generate && tsx watch src/http/server.ts"
-  },
+"scripts": {
+  "dev": "tsx watch src/http/server.ts",
+  "build": "tsc",
+  "prod": "node dist/src/http/server.js",
+  "prisma:generate": "npx prisma generate"
+}
+,
   "keywords": [],
   "author": "",
   "license": "ISC",

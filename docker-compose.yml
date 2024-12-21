@@ -30,6 +30,15 @@ services:
       - redisdata:/data
     ports:
       - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      retries: 5
+      start_period: 5s
+      timeout: 5s
+    networks:
+      - app-network
+
 
   app:
     build:
@@ -49,3 +58,7 @@ services:
 volumes:
   postgres_data:
   redisdata:
+
+networks:
+  app-network:
+    driver: bridge
