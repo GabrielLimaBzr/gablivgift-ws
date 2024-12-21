@@ -42,7 +42,7 @@ app.register(login, { prefix: prefix + "/auth" });
 // Inicialização do servidor
 const start = async () => {
   try {
-    await app.listen({ port: 8080 });
+    await app.listen({ port: 3000 });
     app.log.info('Server is running on http://localhost:8080');
   } catch (err) {
     app.log.error(err);
