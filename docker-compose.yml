@@ -56,6 +56,10 @@ services:
       - .:/app
     networks:
       - app-network
+    environment:
+      - DATABASE_URL = ${DATABASE_URL}
+      - JWT_SECRET = ${JWT_SECRET}
+      - JWT_EXPIRATION = ${JWT_EXPIRATION}
 
 volumes:
   postgres_data:

@@ -30,7 +30,6 @@ export async function register(fastify: FastifyInstance) {
       select: {
         id: true,
         fullName: true,
-        nickname: true,
       },
     });
 
