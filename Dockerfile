@@ -34,8 +34,6 @@ RUN apk add --no-cache openssl
 # Copiar apenas os arquivos necessários da etapa de construção
 COPY --from=builder /app /app
 
-RUN npm run migra
-
 # Expor a porta da aplicação
 EXPOSE 8888
 
