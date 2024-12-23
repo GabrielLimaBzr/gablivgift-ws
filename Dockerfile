@@ -7,8 +7,8 @@ WORKDIR /app
 # Copiar package.json e package-lock.json
 COPY package*.json ./
 
-# Instalar dependências de produção
-RUN npm install --only=production
+# Instalar dependências de desenvolvimento e produção
+RUN npm install
 
 # Copiar o restante do código da aplicação
 COPY . .
@@ -16,11 +16,11 @@ COPY . .
 # Instalar OpenSSL na versão mais recente
 RUN apk add --no-cache openssl
 
+# Gerar o Prisma Client
+RUN npm run prisma
+
 # Construir a aplicação
 RUN npm run build
-
-# Gerar o Prisma Client
-RUN npm run prisma:generate
 
 # Etapa de execução
 FROM node:20-alpine
@@ -35,7 +35,7 @@ RUN apk add --no-cache openssl
 COPY --from=builder /app /app
 
 # Expor a porta da aplicação
-EXPOSE 3000
+EXPOSE 8888
 
 # Comando para iniciar a aplicação
 CMD ["npm", "run", "prod"]

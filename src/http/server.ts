@@ -17,7 +17,7 @@ app.register(jwtPlugin);
 // Middleware global para proteger rotas
 app.addHook("onRequest", async (request, reply) => {
   app.log.info(request.url)
-  if (request.url !== '/' && !request.url.startsWith(prefix + '/auth')) {
+  if (request.url !== '/checkl7' && !request.url.startsWith(prefix + '/auth')) {
     // Ignorar autenticação para rotas públicas como '/', '/auth/register', '/auth/login'
     try {
       await request.jwtVerify();
@@ -42,8 +42,9 @@ app.register(login, { prefix: prefix + "/auth" });
 // Inicialização do servidor
 const start = async () => {
   try {
-    await app.listen({ port: 3000 });
-    app.log.info('Server is running on http://localhost:3000');
+    await app.listen({host: '0.0.0.0', port: 8888 });
+    app.log.info('Server is running on http://localhost:8888');
+    app.log.info('rodando...');
   } catch (err) {
     app.log.error(err);
     process.exit(1);
