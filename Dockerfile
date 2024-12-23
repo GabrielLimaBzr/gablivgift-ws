@@ -2,7 +2,7 @@
 FROM node:20-alpine AS builder
 
 # Definir diretório de trabalho
-WORKDIR /app
+WORKDIR /ws
 
 # Copiar package.json e package-lock.json
 COPY package*.json ./
@@ -26,13 +26,13 @@ RUN npm run build
 FROM node:20-alpine
 
 # Definir diretório de trabalho
-WORKDIR /app
+WORKDIR /ws
 
 # Instalar OpenSSL na versão mais recente também na imagem final
 RUN apk add --no-cache openssl
 
 # Copiar apenas os arquivos necessários da etapa de construção
-COPY --from=builder /app /app
+COPY --from=builder /ws /ws
 
 # Expor a porta da aplicação
 EXPOSE 8888
