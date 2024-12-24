@@ -3,7 +3,9 @@ import { createGift } from "./routes/gift/create-gift";
 import { register } from "./routes/auth/register";
 import { login } from "./routes/auth/login";
 import { jwtPlugin } from "../plugins/jwt";
+import dotenv from 'dotenv';
 
+dotenv.config();
 
 const app = fastify({
   logger: true,
@@ -42,7 +44,7 @@ app.register(login, { prefix: prefix + "/auth" });
 // Inicialização do servidor
 const start = async () => {
   try {
-    await app.listen({host: '0.0.0.0', port: 8888 });
+    await app.listen({host: '0.0.0.0', port: Number(process.env.PORT) });
     app.log.info('Server is running on http://localhost:8888');
     app.log.info('rodando...');
   } catch (err) {
