@@ -72,7 +72,7 @@ services:
       - ./nginx.conf:/etc/nginx/nginx.conf  # Montando o arquivo nginx.conf
       - ./ssl:/etc/nginx/ssl  # Diretório com os certificados SSL
     depends_on:
-      - app_service
+      - app
     restart: always
     networks:
       - app-network
