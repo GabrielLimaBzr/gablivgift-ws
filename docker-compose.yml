@@ -48,7 +48,7 @@ services:
     container_name: app_service
     restart: always
     ports:
-      - "8888:8888"
+      - ${PORT}:${PORT}
     depends_on:
       - postgres
       - redis

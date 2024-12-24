@@ -17,6 +17,7 @@ COPY . .
 RUN apk add --no-cache openssl
 
 # Gerar o Prisma Client
+
 RUN npm run prisma
 
 # Construir a aplicação
