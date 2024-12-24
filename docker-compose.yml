@@ -61,6 +61,18 @@ services:
       - JWT_SECRET = ${JWT_SECRET}
       - JWT_EXPIRATION = ${JWT_EXPIRATION}
 
+  nginx:
+    image: nginx
+    ports:
+      - "80:80"   # Porta HTTP para redirecionamento
+      - "433:433" # Porta HTTPS
+    volumes:
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf
+      - ./certs:/etc/letsencrypt
+    depends_on:
+      - app_service
+    restart: always
+
 volumes:
   postgres_data:
   redisdata:

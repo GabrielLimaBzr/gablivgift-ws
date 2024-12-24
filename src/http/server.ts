@@ -45,7 +45,6 @@ app.register(login, { prefix: prefix + "/auth" });
 const start = async () => {
   try {
     await app.listen({host: '0.0.0.0', port: Number(process.env.PORT) });
-    app.log.info('Server is running on http://localhost:8888');
     app.log.info('rodando...');
   } catch (err) {
     app.log.error(err);
