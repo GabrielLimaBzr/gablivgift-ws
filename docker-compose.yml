@@ -60,18 +60,22 @@ services:
       - DATABASE_URL = ${DATABASE_URL}
       - JWT_SECRET = ${JWT_SECRET}
       - JWT_EXPIRATION = ${JWT_EXPIRATION}
+      - PORT = ${PORT}
 
   nginx:
-    image: nginx
+    image: nginx:latest
+    container_name: nginx
     ports:
-      - "80:80"   # Porta HTTP para redirecionamento
-      - "433:433" # Porta HTTPS
+       - "80:80"   # Porta HTTP
+       - "443:443" # Porta HTTPS
     volumes:
-      - ./nginx.conf:/etc/nginx/conf.d/default.conf
-      - ./certs:/etc/letsencrypt
+      - ./nginx.conf:/etc/nginx/nginx.conf  # Montando o arquivo nginx.conf
+      - ./ssl:/etc/nginx/ssl  # Diretório com os certificados SSL
     depends_on:
       - app_service
     restart: always
+    networks:
+      - app-network
 
 volumes:
   postgres_data:
