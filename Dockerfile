@@ -36,7 +36,7 @@ RUN apk add --no-cache openssl
 COPY --from=builder /ws /ws
 
 # Expor a porta da aplicação
-EXPOSE 8888
+EXPOSE ${PORT}
 
 # Comando para iniciar a aplicação
 CMD ["npm", "run", "prod"]
