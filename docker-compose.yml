@@ -62,20 +62,6 @@ services:
       - JWT_EXPIRATION = ${JWT_EXPIRATION}
       - PORT = ${PORT}
 
-  nginx:
-    image: nginx:latest
-    container_name: nginx
-    ports:
-       - "443:443"
-    volumes:
-      - ./nginx.conf:/etc/nginx/nginx.conf
-      - ./nginx/certs:/etc/nginx/certs
-    depends_on:
-      - app
-    restart: always
-    networks:
-      - app-network
-
 volumes:
   postgres_data:
   redisdata:
