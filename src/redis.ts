@@ -1,7 +1,7 @@
 import Redis from 'ioredis';
 
 const redis = new Redis({
-  host: 'redis', 
+  host: 'localhost', 
   port: 6379,        // Porta padrão do Redis
 });
 
