@@ -16,7 +16,6 @@ model User {
   createdAt  DateTime  @default(now())
   updatedAt  DateTime? @updatedAt
   isActive   Boolean?  @default(false)
-  emailToken String?
 
   // Relacionamento
   couples1 Couple[] @relation("User1Couples") // Casais onde o usuário é user1
