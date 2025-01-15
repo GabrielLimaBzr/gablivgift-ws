@@ -4,6 +4,7 @@ import { register } from "./routes/auth/register";
 import { login } from "./routes/auth/login";
 import { jwtPlugin } from "../plugins/jwt";
 import dotenv from 'dotenv';
+import cors from '@fastify/cors';
 
 dotenv.config();
 
@@ -12,6 +13,14 @@ const app = fastify({
 });
 
 const prefix = "/gabliv/api/v1";
+
+// Configuração de CORS
+app.register(cors, {
+  origin: ['https://gablivgift.vercel.app',], // Lista de origens permitidas
+  methods: ['GET', 'POST', 'PUT'], // Métodos HTTP permitidos
+  allowedHeaders: ['Content-Type', 'Authorization'], // Cabeçalhos permitidos
+  credentials: true, // Se a requisição deve incluir cookies
+});
 
 // Registro do plugin JWT
 app.register(jwtPlugin);

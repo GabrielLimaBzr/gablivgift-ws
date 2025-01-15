@@ -31,6 +31,49 @@ export async function register(fastify: FastifyInstance) {
       .string().min(8, "A senha deve ter no mínimo 8 caracteres")
   });
 
+  function generateHtmlEmail(user: { fullName: string }, verificationLink: string): string {
+    return `
+      <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 8px;">
+        <h2 style="text-align: center; color: #4CAF50;">Confirme seu endereço de e-mail</h2>
+        <p>Olá ${user.fullName}!</p>
+        <p>Confirme o seu e-mail para criar uma conta no Jusbrasil.</p>
+        <div style="text-align: center; margin: 20px 0;">
+          <a href="${verificationLink}" 
+             style="display: inline-block; padding: 12px 24px; background-color: #4CAF50; color: #fff; text-decoration: none; font-size: 16px; font-weight: bold; border-radius: 5px;">
+             Confirmar e-mail
+          </a>
+        </div>
+        <p>Caso não consiga clicar no botão acima, copie e cole este endereço no seu navegador:</p>
+        <p style="word-wrap: break-word; color: #555;">${verificationLink}</p>
+        <p>Atenciosamente,<br>GabLiv Gifts</p>
+        <hr style="border: none; border-top: 1px solid #eee; margin: 20px 20px;">
+        <p style="font-size: 12px; color: #666;">Este link expira em 24 horas.<br>Se não foi você quem fez essa solicitação, por favor, desconsidere este e-mail.</p>
+        <p style="font-size: 12px; color: #999; text-align: center;">© 2024, Gabliv Gifts </p>
+      </div>
+    `;
+  }
+
+  // Função para criar o texto puro do e-mail
+  function generatePlainTextEmail(user: { fullName: string }, verificationLink: string): string {
+    return `
+        Confirme seu endereço de e-mail
+        Olá ${user.fullName}!
+        Confirme o seu e-mail para criar uma conta no GabLiv Gifts.
+        Confirme seu e-mail no link abaixo:
+        ${verificationLink}
+        Caso não consiga clicar no botão acima, copie e cole este endereço no seu navegador:
+        ${verificationLink}
+        
+        Atenciosamente,
+        GabLiv Gifts
+        
+        Este link expira em 24 horas.
+        Se não foi você quem fez essa solicitação, por favor, desconsidere este e-mail.
+          `
+      ;
+  }
+
+
   async function sendEmail(user: { id: number; email: string; fullName: string }) {
     try {
       // Gera um token de verificação de e-mail
@@ -42,16 +85,14 @@ export async function register(fastify: FastifyInstance) {
       fastify.log.info(`Email: ${process.env.EMAIL_SENDER}`);
 
       // Envia o e-mail de verificação
-      const verificationLink = `http://localhost:433/gabliv/api/v1/auth/verify-email?token=${token}`;
+      const verificationLink = `https://gablivgift.vercel.app/verify-email?token=${token}`;
 
       await transporter.sendMail({
         from: `"GabLiv Gifts" <${process.env.EMAIL_SENDER}>`, // Remetente
         to: user.email, // Destinatário
         subject: 'Verifique seu e-mail',
-        text: `Olá ${user.fullName}, clique no link abaixo para verificar seu e-mail: ${verificationLink}`,
-        html: `<p>Olá ${user.fullName},</p>
-              <p>Clique no link abaixo para verificar seu e-mail:</p>
-              <a href="${verificationLink}">${verificationLink}</a>`,
+        text: generatePlainTextEmail(user, verificationLink),
+        html: generateHtmlEmail(user, verificationLink),
       });
 
       fastify.log.info('E-mail para validação enviado com sucesso');
@@ -121,18 +162,33 @@ export async function register(fastify: FastifyInstance) {
     const { token } = request.query as { token: string };
 
     try {
-      // Verifica e decodifica o token usando o Fastify JWT
       const decoded = fastify.jwt.verify(token) as { userId: number };
-
-      // Ativa o usuário
+    
+      const user = await prisma.user.findUnique({
+        where: { id: decoded.userId },
+      });
+    
+      if (!user) {
+        return reply.status(400).send({ error: 'Token inválido.' });
+      }
+    
+      if (user.isActive) {
+        return reply.status(400).send({ error: 'Token inválido.' });
+      }
+    
       await prisma.user.update({
         where: { id: decoded.userId },
         data: { isActive: true },
       });
-
+    
       reply.send({ message: 'E-mail verificado com sucesso! Você já pode fazer login.' });
-    } catch (err) {
-      return reply.status(400).send({ error: 'Token inválido ou expirado.' });
+    } catch (err: any) {
+      if (err.name === 'TokenExpiredError') {
+        return reply.status(400).send({ error: 'Token expirado. Solicite um novo link de verificação.' });
+      }
+    
+      return reply.status(400).send({ error: 'Token inválido.' });
     }
+    
   });
 }

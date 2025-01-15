@@ -24,6 +24,7 @@
     "typescript": "^5.7.2"
   },
   "dependencies": {
+    "@fastify/cors": "^10.0.2",
     "@fastify/jwt": "^5.0.1",
     "@prisma/client": "^6.0.1",
     "bcryptjs": "^2.4.3",
