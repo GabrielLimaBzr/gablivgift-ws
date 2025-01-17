@@ -9,7 +9,9 @@ import cors from '@fastify/cors';
 dotenv.config();
 
 const app = fastify({
-  logger: true,
+  logger: {
+    timestamp: () => `,"time":"${new Date().toLocaleString('pt-BR')}"`,
+  },
 });
 
 const prefix = "/gabliv/api/v1";
