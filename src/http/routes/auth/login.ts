@@ -3,6 +3,7 @@ import bcrypt from 'bcryptjs';
 import { PrismaClient } from '@prisma/client';
 import redis from '../../../redis';
 
+
 const prisma = new PrismaClient();
 
 export async function login(fastify: FastifyInstance) {

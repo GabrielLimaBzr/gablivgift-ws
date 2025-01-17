@@ -1,10 +1,14 @@
 import { FastifyInstance } from 'fastify'
 import { z } from 'zod'
 import { PrismaClient } from '@prisma/client';
+import dotenv from 'dotenv';
+
+// Carrega as variáveis de ambiente do arquivo .env
+dotenv.config();
 
 const prisma = new PrismaClient();
 
-export async function createGift(app: FastifyInstance) {
+export async function createGift(fastify: FastifyInstance) {
   const createGiftSchema = z.object({
     title: z
       .string()
@@ -23,23 +27,44 @@ export async function createGift(app: FastifyInstance) {
       .int('A categoria deve ser um número inteiro')
       .optional(),
     priority: z.boolean().optional(),
-    addedByUserId: z.number(),
     imageUrl: z.string().url().optional(),
-    coupleId: z.number().optional(),
   });
 
-  app.post('/create-gift', async (request, reply) => {
+  fastify.post('/create-gift', async (request, reply) => {
     try {
+       // Pegar o token da requisição
+       const authHeader = request.headers['authorization'];
+       if (!authHeader) {
+         return reply.status(401).send({ message: 'Token de autenticação necessário' });
+       }
+ 
+       const token = authHeader.replace('Bearer ', '');
+ 
+       // Decodificar o token e pegar o ID do usuário
+       let userId: string | null = null;
+       try {
+         const decoded = fastify.jwt.verify(token, { complete: false });
+         fastify.log.info(`Decoded token: ${JSON.stringify(decoded)}`);
+         userId = (decoded as any).userId; // Pegar o ID do usuário decodificado
+       } catch (err) {
+         return reply.status(401).send({ message: 'Token inválido ou expirado' });
+       }
+ 
+       if (!userId) {
+         return reply.status(401).send({ message: 'Usuário não autenticado' });
+       }
+
+
       const {
         title,
         description,
         estimatedPrice,
         category = 9,
         priority = false,
-        addedByUserId,
         imageUrl,
-        coupleId,
       } = createGiftSchema.parse(request.body);
+
+      
 
       const gift = await prisma.gift.create({
         data: {
@@ -48,9 +73,8 @@ export async function createGift(app: FastifyInstance) {
           estimatedPrice,
           category,
           priority,
-          addedByUserId,
           imageUrl,
-          coupleId,
+          userId: parseInt(userId),
         },
       });
 
