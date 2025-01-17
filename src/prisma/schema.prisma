@@ -27,13 +27,12 @@ model User {
 model Couple {
   id        Int      @id @default(autoincrement())
   user1Id   Int
-  user2Id   Int?
+  user2Id   Int
   createdAt DateTime @default(now())
 
   // Relacionamentos
   user1 User   @relation("User1Couples", fields: [user1Id], references: [id])
-  user2 User?  @relation("User2Couples", fields: [user2Id], references: [id])
-  gifts Gift[] // Presentes associados ao casal
+  user2 User  @relation("User2Couples", fields: [user2Id], references: [id])
 
   @@unique([user1Id, user2Id]) // Garante que um casal seja único
 }
@@ -44,14 +43,11 @@ model Gift {
   title          String
   description    String?  @db.Text
   imageUrl       String?  @db.Text
-  estimatedPrice Float?
+  estimatedPrice Float?   @default(0.00)
   category       Int      @default(9)
   priority       Boolean  @default(false)
   createdAt      DateTime @default(now())
 
-  // Relacionamento
-  couple Couple? @relation(fields: [coupleId], references: [id])
-
-  addedByUserId Int
-  addedByUser   User @relation(fields: [addedByUserId], references: [id])
+  userId Int
+  addedByUser   User @relation(fields: [userId], references: [id])
 }
