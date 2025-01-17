@@ -23,24 +23,6 @@ services:
     networks:
       - app-network
 
-  redis:
-    image: redis:7
-    container_name: redis
-    restart: always
-    command: redis-server --appendonly yes
-    volumes:
-      - redisdata:/data
-    ports:
-      - "6379:6379"
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 10s
-      retries: 5
-      start_period: 5s
-      timeout: 5s
-    networks:
-      - app-network
-
   app:
     build:
       context: .
@@ -51,7 +33,6 @@ services:
       - ${PORT}:${PORT}
     depends_on:
       - postgres
-      - redis
     volumes:
       - .:/app
     networks:
@@ -64,7 +45,6 @@ services:
 
 volumes:
   postgres_data:
-  redisdata:
 
 networks:
   app-network:
