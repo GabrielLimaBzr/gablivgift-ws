@@ -10,6 +10,7 @@ dotenv.config();
 
 const app = fastify({
   logger: {
+    level: "error",
     timestamp: () => `,"time":"${new Date().toLocaleString('pt-BR')}"`,
   },
 });
