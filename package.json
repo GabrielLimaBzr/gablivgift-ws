@@ -8,7 +8,8 @@
     "build": "tsc",
     "prod": "node dist/http/server.js",
     "prisma": "npx prisma generate",
-    "migra": "npx prisma migrate dev --name init"
+    "migra": "npx prisma migrate deploy",
+    "start": "npx prisma migrate deploy && npm run prod"
   },
   "keywords": [],
   "author": "",

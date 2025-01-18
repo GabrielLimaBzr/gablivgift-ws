@@ -38,5 +38,8 @@ COPY --from=builder /ws /ws
 # Expor a porta da aplicação
 EXPOSE ${PORT}
 
+# Construir a aplicação
+RUN npm run migra
+
 # Comando para iniciar a aplicação
 CMD ["npm", "run", "prod"]
