@@ -14,10 +14,14 @@ RUN npm install
 COPY . .
 
 # Instalar OpenSSL na versão mais recente
-RUN apk add --no-cache openssl
+RUN apk add --no-cache openssl tzdata
+
+# Configurar o timezone para America/Sao_Paulo
+ENV TZ=America/Sao_Paulo
+RUN cp /usr/share/zoneinfo/America/Sao_Paulo /etc/localtime && echo "America/Sao_Paulo" > /etc/timezone
+
 
 # Gerar o Prisma Client
-
 RUN npm run prisma
 
 # Construir a aplicação
