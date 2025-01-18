@@ -16,6 +16,11 @@ const app = fastify({
 
 const prefix = "/gabliv/api/v1";
 
+app.register(import('@fastify/rate-limit'), {
+  max: 200,
+  timeWindow: '1 minute'
+})
+
 // Configuração de CORS
 app.register(cors, {
   origin: ['https://gablivgift.vercel.app',], // Lista de origens permitidas

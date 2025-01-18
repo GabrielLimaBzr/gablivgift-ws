@@ -1,4 +1,4 @@
-import { FastifyInstance } from 'fastify'
+import { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify'
 import { z } from 'zod'
 import { PrismaClient } from '@prisma/client';
 import dotenv from 'dotenv';
@@ -30,30 +30,45 @@ export async function createGift(fastify: FastifyInstance) {
     imageUrl: z.string().url().optional(),
   });
 
+
+  async function getUserIdFromToken(request: FastifyRequest, reply: FastifyReply): Promise<string | null> {
+    // Pegar o token da requisição
+    const authHeader = request.headers['authorization'];
+    if (!authHeader) {
+      reply.status(401).send({ message: 'Token de autenticação necessário' });
+      return null; // Retorna null se o token não for encontrado
+    }
+
+    const token = authHeader.replace('Bearer ', '');
+
+    // Decodificar o token e pegar o ID do usuário
+    try {
+      const decoded = fastify.jwt.verify(token, { complete: false });
+      fastify.log.info(`Decoded token: ${JSON.stringify(decoded)}`);
+
+      const userId = (decoded as any).userId; // Pegar o ID do usuário decodificado
+
+      if (!userId) {
+        reply.status(401).send({ message: 'Usuário não autenticado' });
+        return null; // Retorna null se o userId não for encontrado
+      }
+
+      return userId; // Retorna o ID do usuário se tudo estiver certo
+    } catch (err) {
+      reply.status(401).send({ message: 'Token inválido ou expirado' });
+      return null; // Retorna null em caso de erro na verificação do token
+    }
+  }
+
+
+
   fastify.post('/create-gift', async (request, reply) => {
     try {
-       // Pegar o token da requisição
-       const authHeader = request.headers['authorization'];
-       if (!authHeader) {
-         return reply.status(401).send({ message: 'Token de autenticação necessário' });
-       }
- 
-       const token = authHeader.replace('Bearer ', '');
- 
-       // Decodificar o token e pegar o ID do usuário
-       let userId: string | null = null;
-       try {
-         const decoded = fastify.jwt.verify(token, { complete: false });
-         fastify.log.info(`Decoded token: ${JSON.stringify(decoded)}`);
-         userId = (decoded as any).userId; // Pegar o ID do usuário decodificado
-       } catch (err) {
-         return reply.status(401).send({ message: 'Token inválido ou expirado' });
-       }
- 
-       if (!userId) {
-         return reply.status(401).send({ message: 'Usuário não autenticado' });
-       }
+      const userId = await getUserIdFromToken(request, reply);
 
+      if (!userId) {
+        return;
+      }
 
       const {
         title,
@@ -64,7 +79,7 @@ export async function createGift(fastify: FastifyInstance) {
         imageUrl,
       } = createGiftSchema.parse(request.body);
 
-      
+
 
       const gift = await prisma.gift.create({
         data: {
@@ -89,4 +104,27 @@ export async function createGift(fastify: FastifyInstance) {
       return reply.status(500).send({ error: 'Erro interno do servidor' });
     }
   });
+
+  fastify.get('/gifts', async (request, reply) => {
+    const userId = await getUserIdFromToken(request, reply);
+
+    if (!userId) {
+      return; // Se o usuário não estiver autenticado, a função já enviou o erro
+    }
+
+    try {
+      // Busca os gifts relacionados ao userId
+      const gifts = await prisma.gift.findMany({
+        where: {
+          userId: parseInt(userId), 
+        },
+      });
+
+      return reply.send({ gifts }); // Retorna os gifts encontrados
+    } catch (err) {
+      // Em caso de erro ao buscar os gifts
+      return reply.status(500).send({ error: 'Erro interno do servidor' });
+    }
+  });
+
 }
