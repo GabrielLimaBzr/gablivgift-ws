@@ -27,7 +27,7 @@ export async function createGift(fastify: FastifyInstance) {
       .int('A categoria deve ser um número inteiro')
       .optional(),
     priority: z.boolean().optional(),
-    imageUrl: z.string().url().optional(),
+    imageUrl: z.string().url().nullable().optional(),
   });
 
 
