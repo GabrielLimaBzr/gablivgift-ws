@@ -20,7 +20,7 @@ export async function createGift(fastify: FastifyInstance) {
       .max(500, 'A descrição não pode exceder 500 caracteres'),
     estimatedPrice: z
       .number()
-      .positive('O preço estimado deve ser um número positivo')
+      .min(0, 'O preço estimado não pode ser negativo')
       .max(100000, 'O preço estimado não pode exceder 100.000'),
     category: z
       .number()
