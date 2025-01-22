@@ -5,6 +5,7 @@ import { login } from "./routes/auth/login";
 import { jwtPlugin } from "../plugins/jwt";
 import dotenv from 'dotenv';
 import cors from '@fastify/cors';
+import multipart from '@fastify/multipart';
 
 dotenv.config();
 
@@ -14,6 +15,9 @@ const app = fastify({
     timestamp: () => `,"time":"${new Date().toLocaleString('pt-BR')}"`,
   },
 });
+
+app.register(multipart);
+
 
 const prefix = "/gabliv/api/v1";
 
@@ -57,6 +61,7 @@ app.get('/checkl7', async () => {
 app.register(createGift, { prefix: prefix + "/gift" });
 app.register(register, { prefix: prefix + "/auth" });
 app.register(login, { prefix: prefix + "/auth" });
+app.register(import('./routes/gift/upload-image-gift'), { prefix: prefix + "/gift" });
 
 // Inicialização do servidor
 const start = async () => {
