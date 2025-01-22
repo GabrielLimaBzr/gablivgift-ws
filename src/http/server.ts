@@ -10,7 +10,7 @@ dotenv.config();
 
 const app = fastify({
   logger: {
-    level: "error",
+    level: "info",
     timestamp: () => `,"time":"${new Date().toLocaleString('pt-BR')}"`,
   },
 });
@@ -24,10 +24,10 @@ app.register(import('@fastify/rate-limit'), {
 
 // Configuração de CORS
 app.register(cors, {
-  origin: ['https://gablivgift.vercel.app',], // Lista de origens permitidas
-  methods: ['GET', 'POST', 'PUT'], // Métodos HTTP permitidos
-  allowedHeaders: ['Content-Type', 'Authorization'], // Cabeçalhos permitidos
-  credentials: true, // Se a requisição deve incluir cookies
+  origin: ['https://gablivgift.vercel.app', '*'] ,
+  methods: ['GET', 'POST', 'PUT'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true,
 });
 
 // Registro do plugin JWT

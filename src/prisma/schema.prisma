@@ -42,7 +42,7 @@ model Gift {
   title          String
   description    String?  @db.Text
   imageUrl       String?  @db.Text
-  estimatedPrice Float?   @default(0.00)
+  estimatedPrice Int?   @default(1)
   category       Int      @default(9)
   priority       Boolean  @default(false)
   createdAt      DateTime @default(now())
