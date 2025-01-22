@@ -102,6 +102,19 @@ export async function register(fastify: FastifyInstance) {
     }
   }
 
+
+  const generateUserCode = () => {
+    const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    let code = '#';
+
+    for (let i = 0; i < 5; i++) {
+      const randomIndex = Math.floor(Math.random() * characters.length);
+      code += characters[randomIndex];
+    }
+
+    return code;
+  };
+
   fastify.post('/register', async (request, reply) => {
     const { fullName, email, password } = dto.parse(request.body);
 
@@ -117,6 +130,13 @@ export async function register(fastify: FastifyInstance) {
           throw new Error('Usuário já existe!');
         }
 
+        let codeUser = generateUserCode();
+
+        // Verifica se o código já existe no banco de dados, e gera um novo se necessário
+        while (await tx.user.findUnique({ where: { codeUser: codeUser } })) {
+          codeUser = generateUserCode();
+        }
+
         // Criptografa a senha
         const hashedPassword = await bcrypt.hash(password, 10);
 
@@ -126,6 +146,7 @@ export async function register(fastify: FastifyInstance) {
             fullName,
             email,
             password: hashedPassword,
+            codeUser: codeUser,
             isActive: false, // Define como inativo até verificar o e-mail
           },
           select: {
@@ -163,32 +184,32 @@ export async function register(fastify: FastifyInstance) {
 
     try {
       const decoded = fastify.jwt.verify(token) as { userId: number };
-    
+
       const user = await prisma.user.findUnique({
         where: { id: decoded.userId },
       });
-    
+
       if (!user) {
         return reply.status(400).send({ error: 'Token inválido.' });
       }
-    
+
       if (user.isActive) {
         return reply.status(400).send({ error: 'Token inválido.' });
       }
-    
+
       await prisma.user.update({
         where: { id: decoded.userId },
         data: { isActive: true },
       });
-    
+
       reply.send({ message: 'E-mail verificado com sucesso! Você já pode fazer login.' });
     } catch (err: any) {
       if (err.name === 'TokenExpiredError') {
         return reply.status(400).send({ error: 'Token expirado. Solicite um novo link de verificação.' });
       }
-    
+
       return reply.status(400).send({ error: 'Token inválido.' });
     }
-    
+
   });
 }
