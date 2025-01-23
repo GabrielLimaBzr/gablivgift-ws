@@ -49,6 +49,7 @@ export async function login(fastify: FastifyInstance) {
         id: user.id,
         fullName: user.fullName,
         email: user.email,
+        codeUser: user.codeUser,
       };
 
       // Gera o token JWT com validade de 7 dias
