@@ -28,7 +28,7 @@ app.register(import('@fastify/rate-limit'), {
 
 // Configuração de CORS
 app.register(cors, {
-  origin: ['https://gablivgift.vercel.app', '*'] ,
+  origin: ['https://gablivgift.vercel.app', 'https://gabliv.bzrdev.icu'] ,
   methods: ['GET', 'POST', 'PUT'],
   allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: true,
