@@ -22,6 +22,13 @@ export default async function uploadRoutes(server: FastifyInstance) {
 
       try {
         const tempPath = path.join(__dirname, `temp-${data.filename}`);
+
+        // Verifica se o diretório existe, se não, cria o diretório
+        const tempDir = path.dirname(tempPath);
+        if (!fs.existsSync(tempDir)) {
+          fs.mkdirSync(tempDir, { recursive: true });
+        }
+
         const fileStream = fs.createWriteStream(tempPath);
         await data.file.pipe(fileStream);
 
