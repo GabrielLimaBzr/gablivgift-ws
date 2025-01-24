@@ -43,7 +43,7 @@ export default async function uploadRoutes(server: FastifyInstance) {
                   gravity: 'auto', // Foca no conteúdo principal
                 },
                 {
-                  quality: 'auto',
+                  quality: 'auto:eco',
                   fetch_format: 'webp',
                 },
               ],
