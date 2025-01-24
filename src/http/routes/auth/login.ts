@@ -22,7 +22,7 @@ export async function login(fastify: FastifyInstance) {
       if (!user) {
         return reply.status(400).send({ message: 'Usuário ou senha incorretos!' });
       }
-      
+
       if (!user.isActive) {
         return reply.status(403).send({ message: 'Usuário inativo ou não verificado!' });
       }
@@ -33,7 +33,7 @@ export async function login(fastify: FastifyInstance) {
         return reply.status(400).send({ message: 'Usuário ou senha incorretos!' });
       }
 
-      
+
 
       // Recupera o casal associado ao usuário (se existir)
       const couple = await prisma.couple.findFirst({
@@ -42,6 +42,20 @@ export async function login(fastify: FastifyInstance) {
             { user1Id: user.id },
             { user2Id: user.id },
           ],
+        },
+        include: {
+          user1: {
+            select: {
+              id: true,
+              fullName: true,
+            },
+          },
+          user2: {
+            select: {
+              id: true,
+              fullName: true,
+            },
+          },
         },
       });
 
@@ -55,14 +69,19 @@ export async function login(fastify: FastifyInstance) {
       // Gera o token JWT com validade de 7 dias
       const token = fastify.jwt.sign({
         userId: user.id,
-        
+
       });
+
+      const coupleResponse = couple ? {
+        id: couple.id,
+        user: user.id === couple.user1Id ? couple.user2 : couple.user1,
+      } : null;
 
       return reply.send({
         message: 'Login bem-sucedido!',
         token,
         user: userResponse,
-        couple,
+        couple: coupleResponse,
       });
 
     } catch (error) {
