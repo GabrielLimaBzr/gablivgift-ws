@@ -37,8 +37,7 @@ export default async function uploadRoutes(server: FastifyInstance) {
               folder: "gifts-upload",
               transformation: [
                 {
-                  width: 1200,
-                  height: 800,
+                  width: 800,
                   crop: 'fill', // Ajusta a imagem para preencher o tamanho
                   gravity: 'auto', // Foca no conteúdo principal
                 },

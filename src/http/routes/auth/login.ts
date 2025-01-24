@@ -48,23 +48,18 @@ export async function login(fastify: FastifyInstance) {
             select: {
               id: true,
               fullName: true,
+              codeUser: true,
             },
           },
           user2: {
             select: {
               id: true,
               fullName: true,
+              codeUser: true,
             },
           },
         },
       });
-
-      const userResponse = {
-        id: user.id,
-        fullName: user.fullName,
-        email: user.email,
-        codeUser: user.codeUser,
-      };
 
       // Gera o token JWT com validade de 7 dias
       const token = fastify.jwt.sign({
@@ -77,11 +72,19 @@ export async function login(fastify: FastifyInstance) {
         user: user.id === couple.user1Id ? couple.user2 : couple.user1,
       } : null;
 
+
+      const userResponse = {
+        id: user.id,
+        fullName: user.fullName,
+        codeUser: user.codeUser,
+        couple: coupleResponse,
+
+      };
+
       return reply.send({
         message: 'Login bem-sucedido!',
         token,
         user: userResponse,
-        couple: coupleResponse,
       });
 
     } catch (error) {
