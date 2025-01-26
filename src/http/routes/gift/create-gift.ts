@@ -236,6 +236,7 @@ export async function createGift(fastify: FastifyInstance) {
     const orderByOptions = {
       createdAt: 'createdAt',
       category: 'category',
+      priority: 'priority',
     };
 
     // Realiza a consulta no banco de dados com os filtros
