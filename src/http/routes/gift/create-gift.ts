@@ -127,77 +127,6 @@ export async function createGift(fastify: FastifyInstance) {
     }
   });
 
-
-  /* fastify.get('/gifts', async (request, reply) => {
-    const userId = await getUserIdFromToken(request, reply);
-
-    if (!userId) {
-      return reply.status(401).send({ error: 'Usuário não autenticado' }); // Caso o usuário não esteja autenticado
-    }
-
-    const {
-      page = 1,
-      limit = 9,
-      category,
-      estimatedPrice,
-      coupleId,
-      orderBy = 'createdAt',
-      orderDirection = 'desc',
-    } = request.query; // Recebe os parâmetros da query
-
-    const skip = (page - 1) * limit; // Cálculo do 'skip' para paginação
-
-    try {
-      // Busca os gifts com filtros, ordenação e paginação
-      const gifts = await prisma.gift.findMany({
-        where: {
-          userId: parseInt(userId),
-          // Filtros adicionais
-          category: category ? parseInt(category) : undefined,
-          estimatedPrice: estimatedPrice ? parseInt(estimatedPrice) : undefined,
-          ...(coupleId && {
-            userId: { in: await getUserIdsFromCouple(coupleId) }, // Filtro de casal
-          }),
-        },
-        orderBy: { [orderBy]: orderDirection },
-        skip,
-        take: limit,
-      });
-
-      // Contar o número total de gifts para cálculo de totalPages
-      const totalGifts = await prisma.gift.count({
-        where: {
-          userId: parseInt(userId),
-          category: category ? parseInt(category) : undefined,
-          estimatedPrice: estimatedPrice ? parseInt(estimatedPrice) : undefined,
-          ...(coupleId && {
-            userId: { in: await getUserIdsFromCouple(coupleId) }, // Filtro de casal
-          }),
-        },
-      });
-
-      return reply.send({
-        gifts,
-        total: totalGifts,
-        totalPages: Math.ceil(totalGifts / limit), // Total de páginas
-      });
-    } catch (err) {
-      console.error(err); // Log do erro para depuração
-      return reply.status(500).send({ error: 'Erro interno do servidor' });
-    }
-  });
-
-  // Função auxiliar para obter os IDs dos usuários de um casal
-  async function getUserIdsFromCouple(coupleId) {
-    const couple = await prisma.couple.findUnique({
-      where: { id: coupleId },
-      select: { user1Id: true, user2Id: true },
-    });
-
-    return couple ? [couple.user1Id, couple.user2Id] : [];
-  } */
-
-
   async function getUserIdsFromCouple(coupleId: string) {
     const couple = await prisma.couple.findUnique({
       where: { id: parseInt(coupleId) },
@@ -208,7 +137,15 @@ export async function createGift(fastify: FastifyInstance) {
   }
 
   fastify.get('/filter', async (request, reply) => {
-    const { page = 1, orderBy = 'createdAt', userId, estimatedPrice, coupleId, orderDirection = 'desc' } = request.query as { page?: number, orderBy?: string, userId?: string, estimatedPrice?: string, coupleId?: string, orderDirection?: string };
+    const { page = 1, orderBy = 'createdAt', userId, estimatedPrice, coupleId, orderDirection = 'desc', title } = request.query as {
+      page?: number,
+      orderBy?: string,
+      userId?: string,
+      estimatedPrice?: string,
+      coupleId?: string,
+      orderDirection?: string,
+      title?: string
+    };
 
     const limit = 9;
     const skip = (page - 1) * limit;
@@ -238,6 +175,14 @@ export async function createGift(fastify: FastifyInstance) {
       category: 'category',
       priority: 'priority',
     };
+
+    // Filtro para "title" (busca parcial)
+    if (title) {
+      filters.title = {
+        contains: title,  // Busca com "like"
+        mode: 'insensitive' // Faz a busca case-insensitive
+      };
+    }
 
     // Realiza a consulta no banco de dados com os filtros
     try {
