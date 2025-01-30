@@ -10,14 +10,11 @@ export async function login(fastify: FastifyInstance) {
     try {
       const { email, password } = request.body as { email: string; password: string };
 
-      // Validações simples de entrada
       if (!email || !password) {
         return reply.status(400).send({ message: 'Email e senha são obrigatórios!' });
       }
 
-      const user = await prisma.user.findUnique({
-        where: { email },
-      });
+      const user = await prisma.user.findUnique({ where: { email } });
 
       if (!user) {
         return reply.status(400).send({ message: 'Usuário ou senha incorretos!' });
@@ -28,75 +25,100 @@ export async function login(fastify: FastifyInstance) {
       }
 
       const isPasswordValid = await bcrypt.compare(password, user.password);
-
       if (!isPasswordValid) {
         return reply.status(400).send({ message: 'Usuário ou senha incorretos!' });
       }
 
+      const coupleActive = await findActiveCouple(user.id);
+      const { requestSent, requestReceived } = await findPendingCouples(user.id);
 
-
-      // Recupera o casal associado ao usuário (se existir)
-      const couple = await prisma.couple.findFirst({
-        where: {
-          OR: [
-            { user1Id: user.id },
-            { user2Id: user.id },
-          ],
-        },
-        include: {
-          user1: {
-            select: {
-              id: true,
-              fullName: true,
-              codeUser: true,
-            },
-          },
-          user2: {
-            select: {
-              id: true,
-              fullName: true,
-              codeUser: true,
-            },
-          },
-        },
+      const userResponse = buildUserResponse(user, coupleActive, {
+        requestSent,
+        requestReceived,
       });
 
-      // Gera o token JWT com validade de 7 dias
-      const token = fastify.jwt.sign({
-        userId: user.id,
+      const token = fastify.jwt.sign({ userId: user.id });
 
-      });
-
-      const coupleResponse = couple ? {
-        id: couple.id,
-        user: user.id === couple.user1Id ? couple.user2 : couple.user1,
-      } : null;
-
-
-      const userResponse = {
-        id: user.id,
-        fullName: user.fullName,
-        codeUser: user.codeUser,
-        couple: coupleResponse,
-
-      };
-
-      return reply.send({
-        message: 'Login bem-sucedido!',
-        token,
-        user: userResponse,
-      });
+      return reply.send({ message: 'Login bem-sucedido!', token, user: userResponse });
 
     } catch (error) {
-      // Registro do erro para auditoria ou debugging
       fastify.log.error(error);
-
-      // Resposta genérica para erros não tratados
-      return reply.status(500).send({
-        message: 'Ocorreu um erro inesperado. Tente novamente mais tarde.',
-      });
+      return reply.status(500).send({ message: 'Ocorreu um erro inesperado. Tente novamente mais tarde.' });
     }
   });
 }
 
+async function findActiveCouple(userId: number) {
+  const activeCouple = await prisma.couple.findFirst({
+    where: {
+      OR: [{ senderId: userId }, { reciverId: userId }],
+      status: 1,
+    },
+    include: {
+      sender: { select: { id: true, fullName: true, codeUser: true } },
+      reciver: { select: { id: true, fullName: true, codeUser: true } },
+    },
+  });
 
+  return activeCouple;
+}
+
+async function findPendingCouples(userId: number) {
+  const listCouple = await prisma.couple.findMany({
+    where: {
+      OR: [{ senderId: userId }, { reciverId: userId }],
+      status: 0,
+    },
+    include: {
+      sender: { select: { id: true, fullName: true, codeUser: true } },
+      reciver: { select: { id: true, fullName: true, codeUser: true } },
+    },
+  });
+
+  const filterRequestSent = listCouple.find(couple => couple.senderId === userId);
+  const requestSent = filterRequestSent
+    ? {
+      id: filterRequestSent.id,
+      status: filterRequestSent.status,
+      reciver: {
+        id: filterRequestSent.reciver?.id,
+        fullName: filterRequestSent.reciver?.fullName,
+        codeUser: filterRequestSent.reciver?.codeUser,
+      },
+    }
+    : null;
+
+
+    const requestReceived = listCouple
+    .filter(couple => couple.reciverId === userId)
+    .map(couple => ({
+      id: couple.id,
+      status: couple.status,
+      sender: {
+        id: couple.sender?.id,
+        fullName: couple.sender?.fullName,
+        codeUser: couple.sender?.codeUser,
+      },
+    }));
+
+  return { requestSent, requestReceived };
+}
+
+
+function buildUserResponse(user: any, coupleActive: any, requests: any) {
+  const coupleResponse = coupleActive
+    ? {
+      id: coupleActive.id,
+      status: coupleActive.status,
+      user: user.id === coupleActive.senderId ? coupleActive.reciverId : coupleActive.senderId,
+    }
+    : null;
+
+  return {
+    id: user.id,
+    fullName: user.fullName,
+    codeUser: user.codeUser,
+    couple: coupleResponse,
+    listRequests: requests,
+  };
+}

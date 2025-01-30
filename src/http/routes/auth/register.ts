@@ -81,8 +81,7 @@ export async function register(fastify: FastifyInstance) {
         { userId: user.id, email: user.email },
         { expiresIn: '24h' }
       );
-      fastify.log.info('Token Gerado Com Sucesso para verificação de EMAIL');
-      fastify.log.info(`Email: ${process.env.EMAIL_SENDER}`);
+      fastify.log.info('Token Gerado Com Sucesso para verificacao de EMAIL');
 
       // Envia o e-mail de verificação
       const verificationLink = `https://gablivgift.vercel.app/verify-email?token=${token}`;
