@@ -1,7 +1,10 @@
-import { FastifyInstance } from 'fastify';
+import fastify, { FastifyInstance } from 'fastify';
 import bcrypt from 'bcryptjs';
 import { PrismaClient } from '@prisma/client';
 
+import { CoupleRepository } from '../../repository/coupleRepository'; 
+
+const coupleRepository = new CoupleRepository();
 
 const prisma = new PrismaClient();
 
@@ -35,19 +38,16 @@ export async function login(fastify: FastifyInstance) {
       let requestReceived: any = [];
 
       if (!coupleActive) {
-        const pendingCouples = await findPendingCouples(user.id);
+        const pendingCouples = await coupleRepository.findPendingCouplesByUser(user.id);
         requestSent = pendingCouples.requestSent;
         requestReceived = pendingCouples.requestReceived;
       }
 
-      const userResponse = buildUserResponse(user, coupleActive, {
-        requestSent,
-        requestReceived,
-      });
+      const userResponse = buildUserResponse(user, coupleActive);
 
       const token = fastify.jwt.sign({ userId: user.id });
 
-      return reply.send({ message: 'Login bem-sucedido!', token, user: userResponse });
+      return reply.send({ message: 'Login bem-sucedido!', token, user: userResponse, requestSent, requestReceived});
 
     } catch (error) {
       fastify.log.error(error);
@@ -71,49 +71,9 @@ async function findActiveCouple(userId: number) {
   return activeCouple;
 }
 
-async function findPendingCouples(userId: number) {
-  const listCouple = await prisma.couple.findMany({
-    where: {
-      OR: [{ senderId: userId }, { reciverId: userId }],
-      status: 0,
-    },
-    include: {
-      sender: { select: { id: true, fullName: true, codeUser: true } },
-      reciver: { select: { id: true, fullName: true, codeUser: true } },
-    },
-  });
-
-  const filterRequestSent = listCouple.find(couple => couple.senderId === userId);
-  const requestSent = filterRequestSent
-    ? {
-      id: filterRequestSent.id,
-      status: filterRequestSent.status,
-      reciver: {
-        id: filterRequestSent.reciver?.id,
-        fullName: filterRequestSent.reciver?.fullName,
-        codeUser: filterRequestSent.reciver?.codeUser,
-      },
-    }
-    : null;
 
 
-  const requestReceived = listCouple
-    .filter(couple => couple.reciverId === userId)
-    .map(couple => ({
-      id: couple.id,
-      status: couple.status,
-      sender: {
-        id: couple.sender?.id,
-        fullName: couple.sender?.fullName,
-        codeUser: couple.sender?.codeUser,
-      },
-    }));
-
-  return { requestSent, requestReceived };
-}
-
-
-function buildUserResponse(user: any, coupleActive: any, requests: any) {
+function buildUserResponse(user: any, coupleActive: any) {
   const coupleResponse = coupleActive
     ? {
       id: coupleActive.id,
@@ -127,6 +87,7 @@ function buildUserResponse(user: any, coupleActive: any, requests: any) {
     fullName: user.fullName,
     codeUser: user.codeUser,
     couple: coupleResponse,
-    listRequests: requests,
   };
 }
+
+

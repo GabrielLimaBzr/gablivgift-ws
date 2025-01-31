@@ -66,12 +66,28 @@ app.register(import('./routes/gift/upload-image-gift'), { prefix: prefix + "/gif
 // Inicialização do servidor
 const start = async () => {
   try {
-    await app.listen({host: '0.0.0.0', port: Number(process.env.PORT) });
+    await app.listen({ host: '0.0.0.0', port: Number(process.env.PORT) });
     app.log.info('rodando...');
+
+    // Tratamento de sinais para encerrar o servidor corretamente
+    process.on('SIGINT', () => {
+      app.close(() => {
+        app.log.info('Servidor encerrado pelo SIGINT (Ctrl+C)');
+        process.exit(0);
+      });
+    });
+
+    process.on('SIGTERM', () => {
+      app.close(() => {
+        app.log.info('Servidor encerrado pelo SIGTERM');
+        process.exit(0);
+      });
+    });
   } catch (err) {
     app.log.error(err);
     process.exit(1);
   }
 };
+
 
 start();

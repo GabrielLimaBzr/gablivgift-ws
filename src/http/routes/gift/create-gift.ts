@@ -9,6 +9,7 @@ dotenv.config();
 const prisma = new PrismaClient();
 
 export async function createGift(fastify: FastifyInstance) {
+
   const createGiftSchema = z.object({
     title: z
       .string()
@@ -60,6 +61,14 @@ export async function createGift(fastify: FastifyInstance) {
     }
   }
 
+  async function getUserIdsFromCouple(coupleId: string) {
+    const couple = await prisma.couple.findUnique({
+      where: { id: parseInt(coupleId), status: 1 },
+      select: { senderId: true, reciverId: true },
+    });
+
+    return couple ? [couple.senderId, couple.reciverId] : [];
+  }
 
 
   fastify.post('/create-gift', async (request, reply) => {
@@ -105,14 +114,6 @@ export async function createGift(fastify: FastifyInstance) {
     }
   });
 
-  async function getUserIdsFromCouple(coupleId: string) {
-    const couple = await prisma.couple.findUnique({
-      where: { id: parseInt(coupleId), status: 1 },
-      select: { senderId: true, reciverId: true },
-    });
-
-    return couple ? [couple.senderId, couple.reciverId] : [];
-  }
 
   fastify.get('/filter', async (request, reply) => {
     const { page = 1, orderBy = 'createdAt', userId, estimatedPrice, coupleId, orderDirection = 'desc', title } = request.query as {
@@ -193,9 +194,9 @@ export async function createGift(fastify: FastifyInstance) {
 
   fastify.post('/solicitar-vinculo', async (request, reply) => {
     try {
-      const senderId  = await getUserIdFromToken(request, reply);
+      const senderId = await getUserIdFromToken(request, reply);
 
-      if (!senderId ) {
+      if (!senderId) {
         return;
       }
 
@@ -208,23 +209,22 @@ export async function createGift(fastify: FastifyInstance) {
       })
 
 
-      if (!reciver || !senderId || reciverId === senderId)  {
+      if (!reciver || !senderId || reciverId === senderId) {
         return reply.status(400).send({ error: 'ID do par inválido.' });
       }
 
-      // Verificar se o casal já está registrado ativo
+
       const casalExistente = await prisma.couple.findFirst({
         where: {
           OR: [
             { reciverId: reciverId, senderId: senderId },
             { reciverId: senderId, senderId: reciverId }
           ],
-          status: 1
         }
       });
 
       if (casalExistente) {
-        return reply.status(409).send({ error: 'Este casal já está registrado.' });
+        return reply.status(409).send({ error: 'Este Par ja tem um casal já está registrado.' });
       }
 
       const novoCasal = await prisma.couple.create({
@@ -244,43 +244,60 @@ export async function createGift(fastify: FastifyInstance) {
     try {
       const userId = await getUserIdFromToken(request, reply);
       if (!userId) return;
-  
+
       const { id } = request.params as { id: string };
       const { status } = request.body as { status: number };
-  
+
       // Validação do status
       if (![1, 2].includes(status)) {
         return reply.status(400).send({ error: 'Status inválido. Deve ser 1 (aceitar) ou 2 (recusar).' });
       }
-  
+
       // Verificar se o registro do casal existe
       const casal = await prisma.couple.findUnique({
         where: { id: parseInt(id) },
       });
-  
+
       if (!casal) {
         return reply.status(404).send({ error: 'Casal não encontrado.' });
       }
-  
+
       // Verifica se o usuário tem permissão para alterar (deve ser o sender ou o reciver)
       if (casal.senderId !== userId && casal.reciverId !== userId) {
         return reply.status(403).send({ error: 'Usuário não autorizado a alterar este registro.' });
       }
-  
+
+      // Verifica se algum dos membros já tem um relacionamento com status 1
+      const relacionamentoExistente = await prisma.couple.findFirst({
+        where: {
+          status: 1,
+          OR: [
+            { senderId: casal.senderId },
+            { senderId: casal.reciverId },
+            { reciverId: casal.senderId },
+            { reciverId: casal.reciverId },
+          ],
+        },
+      });
+
+      if (relacionamentoExistente) {
+        return reply.status(409).send({ error: 'Um dos membros já possui um relacionamento ativo.' });
+      }
+
       // Atualizar o status conforme o valor recebido
       const casalAtualizado = await prisma.couple.update({
         where: { id: parseInt(id) },
         data: { status },
       });
-  
+
       const mensagemStatus = status === 1 ? 'Solicitação aceita com sucesso.' : 'Solicitação recusada com sucesso.';
       return reply.status(200).send({ message: mensagemStatus, casal: casalAtualizado });
-  
+
     } catch (error) {
       console.error(error);
       return reply.status(500).send({ error: 'Erro ao atualizar o status do casal.' });
     }
   });
-  
+
 
 }
