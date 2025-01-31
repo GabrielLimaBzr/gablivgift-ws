@@ -2,9 +2,13 @@ import { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify'
 import { z } from 'zod'
 import { PrismaClient } from '@prisma/client';
 import dotenv from 'dotenv';
+import { CoupleRepository } from '../../repository/coupleRepository';
 
 // Carrega as variáveis de ambiente do arquivo .env
 dotenv.config();
+
+const coupleRepository = new CoupleRepository();
+
 
 const prisma = new PrismaClient();
 
@@ -310,5 +314,23 @@ export async function createGift(fastify: FastifyInstance) {
     }
   });
 
+  fastify.get('/getCoupleReciver', async (request, reply) => {
+    try {
+
+      const userId = await getUserIdFromToken(request, reply);
+
+      if (!userId) {
+        return;
+      }
+  
+      const requestReceived = (await coupleRepository.findPendingCouplesByUser(userId)).requestReceived;
+  
+      return reply.send({ requestReceived });
+  
+    } catch (error) {
+      fastify.log.error(error);
+      return reply.status(500).send({ message: 'Erro ao buscar usuário.' });
+    }
+  });
 
 }

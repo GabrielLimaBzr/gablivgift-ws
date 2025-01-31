@@ -35,19 +35,19 @@ export async function login(fastify: FastifyInstance) {
       const coupleActive = await findActiveCouple(user.id);
 
       let requestSent = null;
-      let requestReceived: any = [];
+      //let requestReceived: any = [];
 
       if (!coupleActive) {
         const pendingCouples = await coupleRepository.findPendingCouplesByUser(user.id);
         requestSent = pendingCouples.requestSent;
-        requestReceived = pendingCouples.requestReceived;
+        //requestReceived = pendingCouples.requestReceived;
       }
 
       const userResponse = buildUserResponse(user, coupleActive);
 
       const token = fastify.jwt.sign({ userId: user.id });
 
-      return reply.send({ message: 'Login bem-sucedido!', token, user: userResponse, requestSent, requestReceived});
+      return reply.send({ message: 'Login bem-sucedido!', token, user: userResponse, requestSent});
 
     } catch (error) {
       fastify.log.error(error);

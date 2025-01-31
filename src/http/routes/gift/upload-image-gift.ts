@@ -74,8 +74,6 @@ export default async function uploadRoutes(server: FastifyInstance) {
   server.get('/getUser/:codeUser', async (request, reply) => {
     try {
       const { codeUser } = request.params as { codeUser: string };
-
-      server.log.info(codeUser)
   
       const user = await prisma.user.findUnique({
         where: { codeUser: `#${codeUser}` },
