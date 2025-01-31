@@ -30,7 +30,15 @@ export async function login(fastify: FastifyInstance) {
       }
 
       const coupleActive = await findActiveCouple(user.id);
-      const { requestSent, requestReceived } = await findPendingCouples(user.id);
+
+      let requestSent = null;
+      let requestReceived: any = [];
+
+      if (!coupleActive) {
+        const pendingCouples = await findPendingCouples(user.id);
+        requestSent = pendingCouples.requestSent;
+        requestReceived = pendingCouples.requestReceived;
+      }
 
       const userResponse = buildUserResponse(user, coupleActive, {
         requestSent,
@@ -89,7 +97,7 @@ async function findPendingCouples(userId: number) {
     : null;
 
 
-    const requestReceived = listCouple
+  const requestReceived = listCouple
     .filter(couple => couple.reciverId === userId)
     .map(couple => ({
       id: couple.id,
@@ -110,7 +118,7 @@ function buildUserResponse(user: any, coupleActive: any, requests: any) {
     ? {
       id: coupleActive.id,
       status: coupleActive.status,
-      user: user.id === coupleActive.senderId ? coupleActive.reciverId : coupleActive.senderId,
+      user: user.id === coupleActive.senderId ? coupleActive.reciver : coupleActive.sender,
     }
     : null;
 

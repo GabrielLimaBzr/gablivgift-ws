@@ -31,7 +31,7 @@ export async function createGift(fastify: FastifyInstance) {
   });
 
 
-  async function getUserIdFromToken(request: FastifyRequest, reply: FastifyReply): Promise<string | null> {
+  async function getUserIdFromToken(request: FastifyRequest, reply: FastifyReply): Promise<number | null> {
     // Pegar o token da requisição
     const authHeader = request.headers['authorization'];
     if (!authHeader) {
@@ -53,7 +53,7 @@ export async function createGift(fastify: FastifyInstance) {
         return null; // Retorna null se o userId não for encontrado
       }
 
-      return userId; // Retorna o ID do usuário se tudo estiver certo
+      return parseInt(userId); // Retorna o ID do usuário se tudo estiver certo
     } catch (err) {
       reply.status(401).send({ message: 'Token inválido ou expirado' });
       return null; // Retorna null em caso de erro na verificação do token
@@ -89,7 +89,7 @@ export async function createGift(fastify: FastifyInstance) {
           category,
           priority,
           imageUrl,
-          userId: parseInt(userId),
+          userId: userId,
         },
       });
 
@@ -105,35 +105,13 @@ export async function createGift(fastify: FastifyInstance) {
     }
   });
 
-  fastify.get('/gifts', async (request, reply) => {
-    const userId = await getUserIdFromToken(request, reply);
-
-    if (!userId) {
-      return; // Se o usuário não estiver autenticado, a função já enviou o erro
-    }
-
-    try {
-      // Busca os gifts relacionados ao userId
-      const gifts = await prisma.gift.findMany({
-        where: {
-          userId: parseInt(userId),
-        },
-      });
-
-      return reply.send({ gifts }); // Retorna os gifts encontrados
-    } catch (err) {
-      // Em caso de erro ao buscar os gifts
-      return reply.status(500).send({ error: 'Erro interno do servidor' });
-    }
-  });
-
   async function getUserIdsFromCouple(coupleId: string) {
     const couple = await prisma.couple.findUnique({
-      where: { id: parseInt(coupleId) },
-      select: { user1Id: true, user2Id: true },
+      where: { id: parseInt(coupleId), status: 1 },
+      select: { senderId: true, reciverId: true },
     });
 
-    return couple ? [couple.user1Id, couple.user2Id] : [];
+    return couple ? [couple.senderId, couple.reciverId] : [];
   }
 
   fastify.get('/filter', async (request, reply) => {
@@ -211,5 +189,98 @@ export async function createGift(fastify: FastifyInstance) {
       reply.status(500).send({ error: 'Failed to fetch gifts' });
     }
   });
+
+
+  fastify.post('/solicitar-vinculo', async (request, reply) => {
+    try {
+      const senderId  = await getUserIdFromToken(request, reply);
+
+      if (!senderId ) {
+        return;
+      }
+
+      const { reciverId } = request.body as { reciverId: number };
+
+      const reciver = await prisma.user.findUnique({
+        where: {
+          id: reciverId
+        }
+      })
+
+
+      if (!reciver || !senderId || reciverId === senderId)  {
+        return reply.status(400).send({ error: 'ID do par inválido.' });
+      }
+
+      // Verificar se o casal já está registrado ativo
+      const casalExistente = await prisma.couple.findFirst({
+        where: {
+          OR: [
+            { reciverId: reciverId, senderId: senderId },
+            { reciverId: senderId, senderId: reciverId }
+          ],
+          status: 1
+        }
+      });
+
+      if (casalExistente) {
+        return reply.status(409).send({ error: 'Este casal já está registrado.' });
+      }
+
+      const novoCasal = await prisma.couple.create({
+        data: { senderId: senderId, reciverId: reciverId }
+      });
+
+      return reply.status(201).send({ message: 'Casal registrado com sucesso.', casal: novoCasal });
+
+    } catch (error) {
+      console.error(error);
+      return reply.status(500).send({ error: 'Erro ao vincular casal.' });
+    }
+  });
+
+
+  fastify.post('/responder-vinculo/:id', async (request, reply) => {
+    try {
+      const userId = await getUserIdFromToken(request, reply);
+      if (!userId) return;
+  
+      const { id } = request.params as { id: string };
+      const { status } = request.body as { status: number };
+  
+      // Validação do status
+      if (![1, 2].includes(status)) {
+        return reply.status(400).send({ error: 'Status inválido. Deve ser 1 (aceitar) ou 2 (recusar).' });
+      }
+  
+      // Verificar se o registro do casal existe
+      const casal = await prisma.couple.findUnique({
+        where: { id: parseInt(id) },
+      });
+  
+      if (!casal) {
+        return reply.status(404).send({ error: 'Casal não encontrado.' });
+      }
+  
+      // Verifica se o usuário tem permissão para alterar (deve ser o sender ou o reciver)
+      if (casal.senderId !== userId && casal.reciverId !== userId) {
+        return reply.status(403).send({ error: 'Usuário não autorizado a alterar este registro.' });
+      }
+  
+      // Atualizar o status conforme o valor recebido
+      const casalAtualizado = await prisma.couple.update({
+        where: { id: parseInt(id) },
+        data: { status },
+      });
+  
+      const mensagemStatus = status === 1 ? 'Solicitação aceita com sucesso.' : 'Solicitação recusada com sucesso.';
+      return reply.status(200).send({ message: mensagemStatus, casal: casalAtualizado });
+  
+    } catch (error) {
+      console.error(error);
+      return reply.status(500).send({ error: 'Erro ao atualizar o status do casal.' });
+    }
+  });
+  
 
 }
