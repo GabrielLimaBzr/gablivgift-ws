@@ -288,10 +288,21 @@ export async function createGift(fastify: FastifyInstance) {
       const casalAtualizado = await prisma.couple.update({
         where: { id: parseInt(id) },
         data: { status },
+        include: {
+          sender: { select: { id: true, fullName: true, codeUser: true } },
+        }
       });
 
+      const coupleResponse = casalAtualizado
+        ? {
+          id: casalAtualizado.id,
+          status: casalAtualizado.status,
+          user: casalAtualizado.sender,
+        }
+        : null;
+
       const mensagemStatus = status === 1 ? 'Solicitação aceita com sucesso.' : 'Solicitação recusada com sucesso.';
-      return reply.status(200).send({ message: mensagemStatus, casal: casalAtualizado });
+      return reply.status(200).send({ message: mensagemStatus, couple: coupleResponse });
 
     } catch (error) {
       console.error(error);
